@@ -7,7 +7,7 @@ function Chat() {
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const userMessage = { sender: "🧑", text: input };
+    const userMessage = { sender: "👤", text: input };
     setMessages(prev => [...prev, userMessage, { sender: "🤖", text: "Mengetik..." }]);
     setInput("");
 
@@ -38,9 +38,11 @@ function Chat() {
     <div className="chat-wrapper">
       <div className="chat-box">
         {messages.map((msg, i) => (
-          <div key={i} className={`bubble ${msg.sender === "🧑" ? "user" : "npc"}`}>
-            <strong>{msg.sender}</strong>: {msg.text}
-          </div>
+          <div key={i} className={`bubble ${msg.sender === "👤" ? "user" : "npc"}`}>
+          {msg.sender === "👤"
+            ? `${msg.text} : ${msg.sender}`
+            : `${msg.sender} : ${msg.text}`}
+        </div>
         ))}
       </div>
       <div className="input-box">
@@ -48,7 +50,7 @@ function Chat() {
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
-          placeholder="Tanya tentang makanan khas Jogja..."
+          placeholder="Tanya tentang oleh-oleh khas Jogja..."
         />
         <button onClick={sendMessage}>Kirim</button>
       </div>
