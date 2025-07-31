@@ -4,6 +4,16 @@ function Chat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
 
+  // Fungsi untuk bicara
+  const speak = (text) => {
+    if (!text) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "id-ID"; // Bahasa Indonesia
+    utterance.rate = 1; // kecepatan bicara normal
+    utterance.pitch = 1; // nada normal
+    speechSynthesis.speak(utterance);
+  };
+
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -19,7 +29,13 @@ function Chat() {
       });
 
       const data = await response.json();
-      updateLastMessage("🤖", data.response || "Maaf, saya tidak bisa menjawab.");
+      const replyText = data.response || "Maaf, saya tidak bisa menjawab.";
+
+      // Update teks balasan
+      updateLastMessage("🤖", replyText);
+
+      // Langsung bicara
+      speak(replyText);
 
     } catch (err) {
       updateLastMessage("🤖", "Terjadi kesalahan saat menghubungi server.");
@@ -34,15 +50,19 @@ function Chat() {
     });
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") sendMessage();
+  };
+
   return (
     <div className="chat-wrapper">
       <div className="chat-box">
         {messages.map((msg, i) => (
           <div key={i} className={`bubble ${msg.sender === "👤" ? "user" : "npc"}`}>
-          {msg.sender === "👤"
-            ? `${msg.text} : ${msg.sender}`
-            : `${msg.sender} : ${msg.text}`}
-        </div>
+            {msg.sender === "👤"
+              ? `${msg.text} : ${msg.sender}`
+              : `${msg.sender} : ${msg.text}`}
+          </div>
         ))}
       </div>
       <div className="input-box">
@@ -50,6 +70,7 @@ function Chat() {
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
+          onKeyPress={handleKeyPress}
           placeholder="Tanya tentang oleh-oleh khas Jogja..."
         />
         <button onClick={sendMessage}>Kirim</button>
