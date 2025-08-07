@@ -1,24 +1,30 @@
-import React, { useState } from 'react';
+// components/Chat.js
+import React, { useState, useEffect, useRef } from 'react';
 
 function Chat() {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([
+    { sender: "bot", text: "Selamat datang di toko oleh-oleh khas Yogyakarta! Ada yang bisa saya bantu?" }
+  ]);
   const [input, setInput] = useState("");
+  const [voiceOn, setVoiceOn] = useState(true);
+  const chatRef = useRef(null);
 
-  // Fungsi untuk bicara
   const speak = (text) => {
-    if (!text) return;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "id-ID"; // Bahasa Indonesia
-    utterance.rate = 1; // kecepatan bicara normal
-    utterance.pitch = 1; // nada normal
-    speechSynthesis.speak(utterance);
+    if (!voiceOn) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'id-ID';
+    speechSynthesis.speak(utter);
+  };
+
+  const scrollToBottom = () => {
+    chatRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const userMessage = { sender: "👤", text: input };
-    setMessages(prev => [...prev, userMessage, { sender: "🤖", text: "Mengetik..." }]);
+    const userMsg = { sender: "user", text: input };
+    setMessages(prev => [...prev, userMsg, { sender: "bot", text: "Mengetik..." }]);
     setInput("");
 
     try {
@@ -29,51 +35,67 @@ function Chat() {
       });
 
       const data = await response.json();
-      const replyText = data.response || "Maaf, saya tidak bisa menjawab.";
-
-      // Update teks balasan
-      updateLastMessage("🤖", replyText);
-
-      // Langsung bicara
-      speak(replyText);
-
-    } catch (err) {
-      updateLastMessage("🤖", "Terjadi kesalahan saat menghubungi server.");
+      const reply = data.response || "Maaf, saya tidak bisa menjawab.";
+      setMessages(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { sender: "bot", text: reply };
+        return updated;
+      });
+      speak(reply);
+    } catch {
+      setMessages(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { sender: "bot", text: "Terjadi kesalahan saat menghubungi server." };
+        return updated;
+      });
     }
   };
 
-  const updateLastMessage = (sender, newText) => {
-    setMessages(prev => {
-      const updated = [...prev];
-      updated[updated.length - 1] = { sender, text: newText };
-      return updated;
-    });
+  const handleKey = (e) => {
+    if (e.key === 'Enter') sendMessage();
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") sendMessage();
-  };
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   return (
-    <div className="chat-wrapper">
-      <div className="chat-box">
+    <div className="chat-container" role="log">
+      <div className="chat-window">
         {messages.map((msg, i) => (
-          <div key={i} className={`bubble ${msg.sender === "👤" ? "user" : "npc"}`}>
-            {msg.sender === "👤"
-              ? `${msg.text} : ${msg.sender}`
-              : `${msg.sender} : ${msg.text}`}
+          <div key={i} className={`message-row ${msg.sender}`}>
+            <div className={`message ${msg.sender}`}>
+              {msg.text === "Mengetik..." ? (
+                <div className="typing">
+                  <div className="typing-dot"></div>
+                  <div className="typing-dot"></div>
+                  <div className="typing-dot"></div>
+                </div>
+              ) : (
+                msg.text
+              )}
+            </div>
           </div>
         ))}
+        <div ref={chatRef} />
       </div>
-      <div className="input-box">
+
+      <div className="quick-questions">
+        <button onClick={() => setInput("Apa oleh-oleh paling laris?")}>Oleh-oleh Paling Laris</button>
+        <button onClick={() => setInput("Apa yang khas dari Gudeg Jogja?")}>Tentang Gudeg</button>
+      </div>
+
+      <div className="input-area">
         <input
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Tanya tentang oleh-oleh khas Jogja..."
+          onKeyDown={handleKey}
+          placeholder="Tanyakan sesuatu tentang makanan khas Jogja..."
+          aria-label="input-pesan"
         />
         <button onClick={sendMessage}>Kirim</button>
+        <button onClick={() => setVoiceOn(!voiceOn)}>{voiceOn ? '🔊 Suara Aktif' : '🔇 Suara Mati'}</button>
       </div>
     </div>
   );
