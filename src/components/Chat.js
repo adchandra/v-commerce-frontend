@@ -10,11 +10,16 @@ function Chat() {
   const chatRef = useRef(null);
 
   const speak = (text) => {
-    if (!voiceOn) return;
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'id-ID';
-    speechSynthesis.speak(utter);
-  };
+  if (!voiceOn) return;
+
+  // Hentikan suara sebelumnya dulu
+  speechSynthesis.cancel();
+
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'id-ID';
+  speechSynthesis.speak(utter);
+};
+
 
   const scrollToBottom = () => {
     chatRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -22,6 +27,8 @@ function Chat() {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
+
+    speechSynthesis.cancel();
 
     const userMsg = { sender: "user", text: input };
     setMessages(prev => [...prev, userMsg, { sender: "bot", text: "Mengetik..." }]);
@@ -79,10 +86,12 @@ function Chat() {
         ))}
         <div ref={chatRef} />
       </div>
-
+      
       <div className="quick-questions">
+        <button onClick={() => setInput("Apa saja oleh-oleh yang ada?")}>Daftar Oleh-oleh</button>
         <button onClick={() => setInput("Apa oleh-oleh paling laris?")}>Oleh-oleh Paling Laris</button>
         <button onClick={() => setInput("Apa yang khas dari Gudeg Jogja?")}>Tentang Gudeg</button>
+
       </div>
 
       <div className="input-area">
