@@ -20,7 +20,7 @@ function stripMarkdown(md = "") {
 
 /**
  * Util: Sanitasi URL supaya hanya http, https, dan mailto yang lolos.
- * Selain itu diblokir dengan '#blocked'.
+ * Selain itu diblokir dengan '##blocked'.
  */
 function safeUri(uri) {
   try {
