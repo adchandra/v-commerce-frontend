@@ -12,10 +12,10 @@ function App() {
 
   return (
     <div className={`App ${theme}`}>
-      <h2>Website NPC Penjual Makanan Jogja</h2>
+      <h2>JOKO AI</h2>
       <Chat />
       <footer>
-        <p>© 2025 NPC Toko Oleh-oleh Jogja. Semua hak dilindungi.</p>
+        <p>© 2025 JOKO AI Toko Oleh-oleh Jogja. Semua hak dilindungi.</p>
       </footer>
     </div>
   );
