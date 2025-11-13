@@ -10,7 +10,7 @@ function stripMarkdown(md = "") {
   return md
     .replace(/!\[[^\]]*\]\([^)]*\)/g, "") // hapus gambar
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 ($2)") // link jadi "teks (url)"
-    .replace(/[_*`>#~\-]+/g, "") // hapus karakter format umum
+    .replace(/[_*`>#~-]+/g, "") // FIXED: hilangkan escape karakter \-
     .replace(/\n{2,}/g, "\n"); // rapikan spasi baris
 }
 
@@ -78,7 +78,7 @@ function Chat() {
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId] = useState(() => generateSessionId());
   const [suggestions, setSuggestions] = useState(DYNAMIC_SUGGESTIONS.welcome);
-  const [chatContext, setChatContext] = useState("welcome");
+  const [_chatContext, setChatContext] = useState("welcome"); // FIXED: rename agar tidak dianggap unused
   const chatRef = useRef(null);
   const [conversationStats, setConversationStats] = useState({
     messageCount: 1,
@@ -98,8 +98,8 @@ function Chat() {
       
       const utter = new SpeechSynthesisUtterance(plain);
       utter.lang = "id-ID";
-      utter.rate = 0.9; // Sedikit lebih lambat untuk clarity
-      utter.pitch = 1.1; // Sedikit lebih tinggi untuk friendly tone
+      utter.rate = 0.9; 
+      utter.pitch = 1.1; 
       utter.volume = 0.8;
       
       speechSynthesis.speak(utter);
@@ -115,7 +115,6 @@ function Chat() {
     const lowerResponse = response.toLowerCase();
     const newStats = { ...conversationStats };
     
-    // Detect discussed products
     const productMentions = [
       'bakpia', 'geplak', 'yangko', 'gudeg', 'monggo', 
       'batik', 'jumputan', 'kopi joss'
@@ -127,7 +126,6 @@ function Chat() {
       }
     });
 
-    // Detect user interests
     if (lowerResponse.includes('murah') || lowerResponse.includes('budget')) {
       if (!newStats.userInterests.includes('budget_conscious')) {
         newStats.userInterests.push('budget_conscious');
@@ -142,7 +140,6 @@ function Chat() {
 
     setConversationStats(newStats);
 
-    // Update context and suggestions
     if (lowerResponse.includes('rp ') || lowerResponse.includes('harga')) {
       setChatContext("after_product_info");
       setSuggestions(DYNAMIC_SUGGESTIONS.after_product_info);
@@ -156,7 +153,7 @@ function Chat() {
   };
 
   /**
-   * Enhanced sendMessage with better UX
+   * Enhanced sendMessage
    */
   const sendMessage = async () => {
     if (!input.trim() || isTyping) return;
@@ -175,7 +172,6 @@ function Chat() {
     setInput("");
     setIsTyping(true);
 
-    // Add typing indicator with delay for more natural feel
     setTimeout(() => {
       setMessages(prev => [...prev, { 
         sender: "bot", 
@@ -195,19 +191,9 @@ function Chat() {
         }),
       });
 
-    //  try {
-    //   const response = await fetch("http://localhost:3002/api/ask-npc", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({ 
-    //       message: userMsg.text,
-    //       sessionId: sessionId
-    //     }),
-    //   });
       const data = await response.json();
       const reply = data.response || "Maaf kak, aku lagi bingung nih. Coba tanya lagi yuk! 😅";
 
-      // Remove typing indicator and add real response
       setMessages(prev => {
         const updated = [...prev];
         updated[updated.length - 1] = { 
@@ -219,16 +205,13 @@ function Chat() {
         return updated;
       });
 
-      // Update conversation stats
       setConversationStats(prev => ({
         ...prev,
         messageCount: prev.messageCount + 2
       }));
 
-      // Analyze response for context
       analyzeResponse(reply);
 
-      // Speak with slight delay for better UX
       setTimeout(() => speak(reply), 500);
 
     } catch (error) {
@@ -237,7 +220,7 @@ function Chat() {
         const updated = [...prev];
         updated[updated.length - 1] = {
           sender: "bot",
-          text: "Waduh, koneksinya lagi bermasalah kak. Coba lagi yuk! Aku masih siap bantu kok 😊",
+          text: "Waduh, koneksinya lagi bermasalah kak. Coba lagi yuk! 😊",
           isError: true,
           timestamp: Date.now()
         };
@@ -249,11 +232,10 @@ function Chat() {
   };
 
   /**
-   * Enhanced quick question handler
+   * Quick question
    */
   const handleQuickQuestion = (question) => {
     setInput(question);
-    // Auto-send after small delay for better UX
     setTimeout(() => {
       if (!isTyping) {
         sendMessage();
@@ -261,16 +243,10 @@ function Chat() {
     }, 100);
   };
 
-  /**
-   * Scroll to bottom
-   */
   const scrollToBottom = () => {
     chatRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  /**
-   * Handle key press
-   */
   const handleKey = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -278,9 +254,6 @@ function Chat() {
     }
   };
 
-  /**
-   * Clear conversation
-   */
   const clearConversation = async () => {
     try {
       await fetch(`https://v-commerce-backend-production.up.railway.app/api/conversation/${sessionId}`, {
@@ -289,7 +262,7 @@ function Chat() {
       
       setMessages([{
         sender: "bot",
-        text: "Halo lagi kak! Mau mulai ngobrol dari awal nih? Ada yang bisa aku bantuin? 😊",
+        text: "Halo lagi kak! Mau mulai dari awal? 😊",
         timestamp: Date.now()
       }]);
       
@@ -310,14 +283,10 @@ function Chat() {
     }
   };
 
-  /**
-   * Auto-scroll effect
-   */
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  // Enhanced markdown components
   const markdownComponents = useMemo(
     () => ({
       a: ({ href, children, ...props }) => (
@@ -362,7 +331,6 @@ function Chat() {
 
   return (
     <div className="chat-container" role="log">
-      {/* Chat Header with Stats */}
       <div className="chat-header">
         <div className="chat-title">
           <h3>💬 Mulai Chat </h3>
@@ -383,7 +351,6 @@ function Chat() {
         </button>
       </div>
 
-      {/* Chat Window */}
       <div className="chat-window">
         {messages.map((msg, i) => (
           <div key={i} className={`message-row ${msg.sender}`}>
@@ -423,7 +390,6 @@ function Chat() {
         <div ref={chatRef} />
       </div>
 
-      {/* Dynamic Quick Suggestions */}
       <div className="quick-questions">
         <div className="suggestions-header">
           <span>💡 Saran pertanyaan:</span>
@@ -442,7 +408,6 @@ function Chat() {
         </div>
       </div>
 
-      {/* Enhanced Input Area */}
       <div className="input-area">
         <div className="input-wrapper">
           <textarea
@@ -490,6 +455,6 @@ function Chat() {
       </div>
     </div>
   );
-} 
-          
+}
+
 export default Chat;
