@@ -186,7 +186,7 @@ function Chat() {
     }, 300);
 
     try {
-      const response = await fetch("https://v-commerce-backend-production.up.railway.app/api/ask-npc", {
+      const response = await fetch("https://v-commerce-backend.vercel.app//api/ask-npc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
